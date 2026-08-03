@@ -1,0 +1,23 @@
+[project]
+name = "parikzan"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Sangeeth M S", email = "iamsangeethms@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi==0.141.1",
+    "openai>=2.52.0",
+    "psycopg[binary]==3.3.4",
+    "pydantic-ai-slim[openai]==2.22.0",
+    "uvicorn==0.52.1",
+]
+
+[project.scripts]
+parikzan = "parikzan:main"
+
+[build-system]
+requires = ["uv_build>=0.12.1,<0.13.0"]
+build-backend = "uv_build"

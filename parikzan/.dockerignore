@@ -1,0 +1,12 @@
+# Keep local secrets and build artifacts out of API image.
+.env
+.env.*
+.venv/
+__pycache__/
+*.pyc
+output/
+tests/
+.git/
+.gitignore
+scripts/
+workflows/

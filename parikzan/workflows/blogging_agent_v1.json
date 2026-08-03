@@ -1,0 +1,568 @@
+{
+  "name": "Parikzan Blogging Agent v1",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b117",
+      "name": "Schedule Daily Blog",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -260,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const topics = [\n  { category: 'learning', topic: 'How active recall makes study sessions more effective', audience: 'students and self-directed learners', primary_keyword: 'active recall study', tone: 'educational' },\n  { category: 'learning', topic: 'How spaced repetition improves long-term memory', audience: 'students and self-directed learners', primary_keyword: 'spaced repetition learning', tone: 'educational' },\n  { category: 'learning', topic: 'How to build a daily study routine that lasts', audience: 'students and self-directed learners', primary_keyword: 'daily study routine', tone: 'practical' },\n  { category: 'learning', topic: 'Why practice questions improve understanding', audience: 'students and self-directed learners', primary_keyword: 'practice questions for learning', tone: 'educational' },\n  { category: 'self_study', topic: 'How to create a self-study plan for any subject', audience: 'self-directed learners', primary_keyword: 'self study plan', tone: 'practical' },\n  { category: 'self_study', topic: 'How to turn reading notes into useful quiz questions', audience: 'self-directed learners', primary_keyword: 'turn notes into quiz questions', tone: 'instructional' },\n  { category: 'self_study', topic: 'How to avoid passive rereading during self-study', audience: 'self-directed learners', primary_keyword: 'active self study techniques', tone: 'educational' },\n  { category: 'self_study', topic: 'How to study difficult topics without losing momentum', audience: 'self-directed learners', primary_keyword: 'study difficult topics', tone: 'supportive' },\n  { category: 'competitive_exam', topic: 'How to use quizzes for competitive examination preparation', audience: 'competitive examination aspirants', primary_keyword: 'competitive exam quiz preparation', tone: 'exam-focused' },\n  { category: 'competitive_exam', topic: 'How to analyze mock-test mistakes before the next exam', audience: 'competitive examination aspirants', primary_keyword: 'analyze mock test mistakes', tone: 'practical' },\n  { category: 'competitive_exam', topic: 'How to manage revision time before a competitive exam', audience: 'competitive examination aspirants', primary_keyword: 'competitive exam revision plan', tone: 'exam-focused' },\n  { category: 'competitive_exam', topic: 'How difficulty-based practice improves exam readiness', audience: 'competitive examination aspirants', primary_keyword: 'exam practice difficulty levels', tone: 'educational' },\n  { category: 'self_evaluation', topic: 'How diagnostic quizzes reveal knowledge gaps', audience: 'students and lifelong learners', primary_keyword: 'diagnostic quiz knowledge gaps', tone: 'educational' },\n  { category: 'self_evaluation', topic: 'How to turn incorrect answers into a study plan', audience: 'students and lifelong learners', primary_keyword: 'learn from incorrect answers', tone: 'practical' },\n  { category: 'self_evaluation', topic: 'How to measure learning progress with regular self-assessment', audience: 'students and lifelong learners', primary_keyword: 'learning self assessment', tone: 'educational' },\n  { category: 'self_evaluation', topic: 'How confidence checks improve exam preparation', audience: 'students and lifelong learners', primary_keyword: 'confidence based self assessment', tone: 'educational' },\n  { category: 'teachers', topic: 'How teachers can create balanced question papers', audience: 'teachers and educators', primary_keyword: 'create balanced question paper', tone: 'teacher-focused' },\n  { category: 'teachers', topic: 'How to blueprint a question paper from learning objectives', audience: 'teachers and educators', primary_keyword: 'question paper blueprint', tone: 'teacher-focused' },\n  { category: 'teachers', topic: 'How to mix easy medium and hard questions in an assessment', audience: 'teachers and educators', primary_keyword: 'question paper difficulty levels', tone: 'teacher-focused' },\n  { category: 'teachers', topic: 'How teachers can turn lesson objectives into practice quizzes', audience: 'teachers and educators', primary_keyword: 'lesson objectives practice quiz', tone: 'teacher-focused' }\n];\nconst selected = topics[Math.floor(Math.random() * topics.length)];\nreturn [{ json: {\n  ...selected,\n  cta: 'Try generating a quiz at https://www.parikzen.com to test understanding.',\n  locale: 'en',\n  target_word_count: 800,\n  output_format: 'markdown'\n} }];"
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b118",
+      "name": "Select Random Blog Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "parikzan/blog",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b101",
+      "name": "Receive Blog Job",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        260,
+        300
+      ],
+      "webhookId": "parikzan-blog-v1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{($vars.PARIKZAN_AGENT_URL || 'http://host.containers.internal:8000') + '/v1/blog/jobs'}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body ?? $json) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b102",
+      "name": "Create Blog Job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{($vars.PARIKZAN_AGENT_URL || 'http://host.containers.internal:8000') + '/v1/blog/outline'}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b103",
+      "name": "Generate Outline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{($vars.PARIKZAN_AGENT_URL || 'http://host.containers.internal:8000') + '/v1/blog/draft'}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b104",
+      "name": "Generate Draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{($vars.PARIKZAN_AGENT_URL || 'http://host.containers.internal:8000') + '/v1/blog/seo'}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b105",
+      "name": "Generate SEO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{($vars.PARIKZAN_AGENT_URL || 'http://host.containers.internal:8000') + '/v1/blog/validate'}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b106",
+      "name": "Validate Blog",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.body ?? $json;\nconst result = typeof raw === 'string' ? JSON.parse(raw) : raw;\nif (!result || typeof result !== 'object') {\n  throw new Error('Validation response is not a JSON object');\n}\nif (result.validation) {\n  result.validation.passed = result.validation.passed === true || String(result.validation.passed).trim().toLowerCase() === 'true';\n}\nreturn [{ json: result }];"
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b120",
+      "name": "Normalize Validation Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.validation?.passed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b107",
+      "name": "Validation Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1820,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $json;\nconst passed = result.validation?.passed === true || String(result.validation?.passed).toLowerCase() === 'true';\nconst manualApproval = result.manual_approval === true || String(result.manual_approval).toLowerCase() === 'true';\nif (!passed && !manualApproval) {\n  throw new Error('Approval guard blocked: validation failed and manual approval was not requested');\n}\nif (!result.job_id || !result.draft) {\n  throw new Error('Approval guard blocked: job_id and draft required');\n}\nreturn [{ json: result }];"
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b119",
+      "name": "Approval Payload Guard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{($vars.PARIKZAN_AGENT_URL || 'http://host.containers.internal:8000') + '/v1/blog/approval/request'}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b116",
+      "name": "Request Human Approval",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2340,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $json;\nconst revision_attempt = Number(result.revision_attempt ?? 0) + 1;\nreturn [{ json: { ...result, revision_attempt } }];"
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b108",
+      "name": "Increment Revision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.revision_attempt }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b109",
+      "name": "Revision Limit",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2340,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{($vars.PARIKZAN_AGENT_URL || 'http://host.containers.internal:8000') + '/v1/blog/revise'}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b110",
+      "name": "Revise Draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2600,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $json;\nreturn [{ json: {\n  job_id: result.job_id,\n  status: 'awaiting_approval',\n  approval_id: result.approval_id ?? null,\n  approval_status: result.approval_status ?? 'pending',\n  revision_attempt: result.revision_attempt ?? 0,\n  outline: result.outline ?? null,\n  draft: result.draft ?? null,\n  validation: result.validation ?? null,\n  sources: result.sources ?? [],\n  next: 'human_approval'\n} }];"
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b111",
+      "name": "Prepare Workflow Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2340,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $json;\nreturn [{ json: {\n  ...result,\n  status: 'awaiting_approval',\n  manual_approval: true,\n  revision_attempt: result.revision_attempt ?? 0,\n  error_code: 'manual_review_required',\n  error_message: 'Automatic validation remained unsuccessful after two revisions. Human decision required.'\n} }];"
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b112",
+      "name": "Prepare Manual Review",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b113",
+      "name": "Return Blog Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2860,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# Parikzan Blogging Agent v1\n\nSet n8n environment variable `PARIKZAN_AGENT_URL` to PydanticAI service URL.\n\nValidation failures receive two revision attempts. Valid drafts create pending human approval. Exhausted jobs return `failed`; publishing remains later task.",
+        "height": 220,
+        "width": 340
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b114",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        500,
+        40
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Daily Blog": {
+      "main": [
+        [
+          {
+            "node": "Select Random Blog Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Random Blog Topic": {
+      "main": [
+        [
+          {
+            "node": "Create Blog Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Blog Job": {
+      "main": [
+        [
+          {
+            "node": "Create Blog Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Blog Job": {
+      "main": [
+        [
+          {
+            "node": "Generate Outline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Outline": {
+      "main": [
+        [
+          {
+            "node": "Generate Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Draft": {
+      "main": [
+        [
+          {
+            "node": "Generate SEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate SEO": {
+      "main": [
+        [
+          {
+            "node": "Validate Blog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Blog": {
+      "main": [
+        [
+          {
+            "node": "Normalize Validation Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Validation Result": {
+      "main": [
+        [
+          {
+            "node": "Validation Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation Gate": {
+      "main": [
+        [
+          {
+            "node": "Approval Payload Guard",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Increment Revision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approval Payload Guard": {
+      "main": [
+        [
+          {
+            "node": "Request Human Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request Human Approval": {
+      "main": [
+        [
+          {
+            "node": "Prepare Workflow Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Increment Revision": {
+      "main": [
+        [
+          {
+            "node": "Revision Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revision Limit": {
+      "main": [
+        [
+          {
+            "node": "Revise Draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Manual Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revise Draft": {
+      "main": [
+        [
+          {
+            "node": "Validate Blog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Workflow Result": {
+      "main": [
+        [
+          {
+            "node": "Return Blog Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Manual Review": {
+      "main": [
+        [
+          {
+            "node": "Request Human Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "versionId": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b115",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

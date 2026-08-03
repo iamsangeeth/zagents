@@ -1,0 +1,275 @@
+{
+  "name": "Parikzan Blogging Approval v1",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Approve Parikzen Blog Draft",
+        "formDescription": "Review draft in OpenWebUI or job output, then approve or reject using job ID.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Job ID",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Decision (approve/reject)",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Reviewer email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Feedback",
+              "fieldType": "textarea",
+              "requiredField": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a2f5cf50-62e6-4c0f-a7d7-9ce4a7c00101",
+      "name": "Approval Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        260,
+        300
+      ],
+      "webhookId": "parikzan-blog-approval-v1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\nconst decision = String(input['Decision (approve/reject)'] ?? '').trim().toLowerCase();\nif (!['approve', 'reject'].includes(decision)) {\n  throw new Error('Decision must be approve or reject');\n}\nreturn [{ json: {\n  job_id: String(input['Job ID']).trim(),\n  decision,\n  reviewer: String(input['Reviewer email']).trim(),\n  feedback: String(input.Feedback ?? '').trim() || null\n} }];"
+      },
+      "id": "a2f5cf50-62e6-4c0f-a7d7-9ce4a7c00102",
+      "name": "Normalize Approval",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{($vars.PARIKZAN_AGENT_URL || 'http://host.containers.internal:8000') + '/v1/blog/approval/decide'}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a2f5cf50-62e6-4c0f-a7d7-9ce4a7c00103",
+      "name": "Record Approval",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "approved",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "a2f5cf50-62e6-4c0f-a7d7-9ce4a7c00106",
+      "name": "Approved Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{($vars.PARIKZAN_AGENT_URL || 'http://host.containers.internal:8000') + '/v1/blog/publish'}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a2f5cf50-62e6-4c0f-a7d7-9ce4a7c00107",
+      "name": "Publish Approved Markdown",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{($vars.PARIKZAN_AGENT_URL || 'http://host.containers.internal:8000') + '/v1/blog/index'}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "a2f5cf50-62e6-4c0f-a7d7-9ce4a7c00108",
+      "name": "Index Approved Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $json;\nreturn [{ json: {\n  job_id: result.job_id,\n  status: 'published',\n  artifact_path: result.artifact_path ?? result.path ?? null,\n  indexed: result.indexed ?? true,\n  qdrant_point_id: result.qdrant_point_id ?? null,\n  next: 'done'\n} }];"
+      },
+      "id": "a2f5cf50-62e6-4c0f-a7d7-9ce4a7c00109",
+      "name": "Return Published Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1820,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $json;\nreturn [{ json: {\n  job_id: result.job_id,\n  status: result.status ?? 'rejected',\n  approval_status: result.approval_status ?? result.status,\n  reviewer: result.reviewer ?? null,\n  feedback: result.feedback ?? null,\n  next: 'revision_or_human_review'\n} }];"
+      },
+      "id": "a2f5cf50-62e6-4c0f-a7d7-9ce4a7c00104",
+      "name": "Return Approval Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# Approval and publish gate\n\nOnly `status=approved` reaches Markdown publish and Qdrant indexing. Reject path never calls publish.\n\nSet `PARIKZAN_AGENT_URL` in n8n. Use production form URL after activating workflow.",
+        "height": 200,
+        "width": 340
+      },
+      "id": "a2f5cf50-62e6-4c0f-a7d7-9ce4a7c00105",
+      "name": "Approval Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        500,
+        40
+      ]
+    }
+  ],
+  "connections": {
+    "Approval Form": {
+      "main": [
+        [
+          {
+            "node": "Normalize Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Approval": {
+      "main": [
+        [
+          {
+            "node": "Record Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Approval": {
+      "main": [
+        [
+          {
+            "node": "Approved Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved Gate": {
+      "main": [
+        [
+          {
+            "node": "Publish Approved Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Approval Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish Approved Markdown": {
+      "main": [
+        [
+          {
+            "node": "Index Approved Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Index Approved Content": {
+      "main": [
+        [
+          {
+            "node": "Return Published Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a2f5cf50-62e6-4c0f-a7d7-9ce4a7c00110",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

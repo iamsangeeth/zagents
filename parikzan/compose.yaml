@@ -1,0 +1,107 @@
+services:
+  postgres:
+    image: docker.io/library/postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-parikzan}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - parikzan_postgres:/var/lib/postgresql/data
+      - ./deploy/postgres/00-create-n8n.sql:/docker-entrypoint-initdb.d/000-create-n8n.sql:ro
+      - ./db/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/001-parikzan-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  qdrant:
+    image: docker.io/qdrant/qdrant:v1.18.3
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+      - "${QDRANT_GRPC_PORT:-6334}:6334"
+    volumes:
+      - parikzan_qdrant:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/6333; printf 'GET / HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3; IFS= read -r status <&3; [[ \"$$status\" == HTTP/*\\ 200* ]]"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  parikzan-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+      APPROVAL_REQUIRED: "true"
+      MODEL: ${OLLAMA_MODEL:-qwen3.5:9b}
+      LLM_PROVIDER: ollama
+      OPENAI_API_KEY: ollama
+      OLLAMA_API_KEY: ollama
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://127.0.0.1:11434/v1}
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@127.0.0.1:5432/${POSTGRES_DB:-parikzan}
+      QDRANT_URL: http://127.0.0.1:6333
+      OUTPUT_DIR: /app/published
+      DATA_DIR: /app/data
+      KNOWLEDGE_DIR: /app/knowledge
+      PROMPTS_DIR: /app/prompts
+    network_mode: host
+    volumes:
+      - ${Q_AI_CONTENT_DIR:-../q_ai/content/blog}:/app/published
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  n8n:
+    image: docker.io/n8nio/n8n:2.32.7
+    restart: unless-stopped
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:-postgres}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      N8N_EDITOR_BASE_URL: ${N8N_EDITOR_BASE_URL:-http://localhost:5678}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      N8N_SECURE_COOKIE: "false"
+      N8N_COMMUNITY_PACKAGES_ENABLED: "false"
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-replace-with-long-local-key}
+      GENERIC_TIMEZONE: Asia/Kolkata
+      TZ: Asia/Kolkata
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    volumes:
+      - parikzan_n8n:/home/node/.n8n
+      # Import these manually from the n8n UI after first start.
+      - ./workflows:/workflows:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      parikzan-api:
+        condition: service_healthy
+
+volumes:
+  parikzan_postgres:
+  parikzan_qdrant:
+  parikzan_n8n:
