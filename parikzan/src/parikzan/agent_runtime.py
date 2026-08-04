@@ -18,6 +18,9 @@ from .contracts import (
     BlogValidationReport,
     SEOData,
     SourceReference,
+    ValidationIssue,
+    count_blog_words,
+    minimum_blog_word_count,
 )
 from .observability import MetricsRecorder
 from .publishing import MarkdownPublisher, QdrantContentIndexer
@@ -217,6 +220,28 @@ class BlogAgentRuntime:
         if context.draft is None:
             raise ValueError("draft required before validation")
         report = self._run_agent(context, "validate", BlogValidationReport)
+        actual_word_count = count_blog_words(context.draft.body_markdown)
+        minimum_word_count = minimum_blog_word_count(context.input.target_word_count)
+        checks = {**report.checks, "minimum_word_count": actual_word_count >= minimum_word_count}
+        issues = list(report.issues)
+        if actual_word_count < minimum_word_count:
+            if not any(issue.code == "minimum_word_count" for issue in issues):
+                issues.append(
+                    ValidationIssue(
+                        code="minimum_word_count",
+                        severity="error",
+                        message=(
+                            f"Draft has {actual_word_count} words; minimum is "
+                            f"{minimum_word_count} for target {context.input.target_word_count}."
+                        ),
+                        path="draft.body_markdown",
+                    )
+                )
+            report = report.model_copy(
+                update={"passed": False, "issues": issues, "checks": checks}
+            )
+        elif checks != report.checks:
+            report = report.model_copy(update={"checks": checks})
         status = "awaiting_approval" if report.passed else "needs_revision"
         event_type = "validation_passed" if report.passed else "validation_failed"
         updated = context.model_copy(update={"validation": report, "status": status})
@@ -256,6 +281,13 @@ class BlogAgentRuntime:
             raise ValueError("failed validation requires explicit manual_approval=true")
         if context.draft is None:
             raise ValueError("approval requires draft")
+        actual_word_count = count_blog_words(context.draft.body_markdown)
+        minimum_word_count = minimum_blog_word_count(context.input.target_word_count)
+        if actual_word_count < minimum_word_count:
+            raise ValueError(
+                f"draft body must contain at least {minimum_word_count} words; "
+                f"got {actual_word_count}"
+            )
         artifact_id = self.database.create_artifact(
             job_id=context.job_id,
             title=context.draft.title,

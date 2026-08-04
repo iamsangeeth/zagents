@@ -1,6 +1,8 @@
 """Typed contracts shared by n8n, Pydantic AI, and persistence code."""
 
 from .blogging import (
+    MIN_BLOG_WORD_COUNT,
+    MIN_TARGET_WORD_RATIO,
     BlogAgentResult,
     BlogCategory,
     BlogDraft,
@@ -8,15 +10,19 @@ from .blogging import (
     BlogJobInput,
     BlogOutline,
     BlogRuntimeContext,
+    BlogValidationReport,
     Citation,
     OutlineSection,
     SEOData,
     SourceReference,
     ValidationIssue,
-    BlogValidationReport,
+    count_blog_words,
+    minimum_blog_word_count,
 )
 
 __all__ = [
+    "MIN_BLOG_WORD_COUNT",
+    "MIN_TARGET_WORD_RATIO",
     "BlogAgentResult",
     "BlogCategory",
     "BlogDraft",
@@ -30,4 +36,6 @@ __all__ = [
     "SEOData",
     "SourceReference",
     "ValidationIssue",
+    "count_blog_words",
+    "minimum_blog_word_count",
 ]

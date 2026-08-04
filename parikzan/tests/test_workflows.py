@@ -52,6 +52,11 @@ class WorkflowTests(unittest.TestCase):
         topic_code = nodes["Select Random Blog Topic"]["parameters"]["jsCode"]
         for category in ("learning", "self_study", "competitive_exam", "self_evaluation", "teachers"):
             self.assertIn(f"category: '{category}'", topic_code)
+        self.assertIn("How to prepare for prelims", topic_code)
+        self.assertIn("How to evaluate your own learning", topic_code)
+        self.assertNotIn("How to use Parikzen", topic_code)
+        self.assertIn("give your topic or notes/file to AI", topic_code)
+        self.assertNotIn("Try generating a quiz at", topic_code)
         self.assertIn("Math.random()", topic_code)
         self.assertIn("https://www.parikzen.com", topic_code)
         self.assertEqual(
@@ -107,8 +112,15 @@ class WorkflowTests(unittest.TestCase):
         for path in prompt_dir.glob("*.md"):
             text = path.read_text(encoding="utf-8")
             self.assertIn("version: `v1`", text)
-        for name in ("PRODUCT.md", "PRICING_FAQ.md", "API.md", "CONTENT_GUIDELINES.md"):
-            self.assertTrue((ROOT / "knowledge" / name).is_file())
+        guidelines = (ROOT / "knowledge" / "CONTENT_GUIDELINES.md").read_text(encoding="utf-8")
+        self.assertIn("at least 90% of article body general", guidelines)
+        self.assertIn("one optional suggestion near the conclusion", guidelines)
+        self.assertIn("topic or notes/file to AI", guidelines)
+        draft_prompt = (prompt_dir / "draft.md").read_text(encoding="utf-8")
+        self.assertIn("at least 90% of article body general", draft_prompt)
+        self.assertIn("one optional concluding CTA", draft_prompt)
+        validate_prompt = (prompt_dir / "validate.md").read_text(encoding="utf-8")
+        self.assertIn("primarily about Parikzen", validate_prompt)
 
     def test_workflows_contain_no_embedded_credentials(self) -> None:
         for name in ("blogging_agent_v1.json", "blogging_approval_v1.json"):

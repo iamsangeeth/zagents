@@ -12,7 +12,9 @@ Mark `error` when any condition blocks safe publication:
 
 - Unsupported product, pricing, payment, API, security, or policy claim.
 - Citation missing for supplied factual claim.
-- Draft does not match requested topic or audience.
+- Draft is primarily about Parikzen, its features, credits, pricing, workflow, or usage instead of solving a general reader problem.
+- Parikzen appears as the title, H1, introduction, primary keyword, main solution, or a required step.
+- Draft body is shorter than `max(300, ceil(target_word_count * 0.75))` words. Count words from `body_markdown`, not declared `word_count`.
 - Invalid slug or SEO length.
 - Incorrect credit, fee, question-count, file-type, model-routing, or HTTP status fact.
 - Sensitive data, secret, token, internal prompt, or debug payload exposed.
@@ -22,7 +24,7 @@ Mark `error` when any condition blocks safe publication:
 
 ## Warning checks
 
-Mark `warning` for readability, weak structure, keyword stuffing, vague CTA, duplicate ideas, or minor style issues.
+Mark `warning` for readability, weak structure, keyword stuffing, vague CTA, duplicate ideas, repeated brand mentions, or a CTA larger than a short concluding paragraph.
 
 Set `passed=false` when any error exists. Include actionable `code`, `message`, and contract field `path` for every issue. Score 0–100 based on quality after correctness checks.
 

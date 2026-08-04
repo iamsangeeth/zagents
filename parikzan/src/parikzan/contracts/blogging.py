@@ -2,10 +2,26 @@
 
 from __future__ import annotations
 
+import re
+from math import ceil
 from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+MIN_BLOG_WORD_COUNT = 300
+MIN_TARGET_WORD_RATIO = 0.75
+
+
+def count_blog_words(body_markdown: str) -> int:
+    """Count human-readable words while ignoring Markdown punctuation."""
+    return len(re.findall(r"\b[\w'-]+\b", body_markdown))
+
+
+def minimum_blog_word_count(target_word_count: int) -> int:
+    """Return minimum acceptable length for requested target."""
+    return max(MIN_BLOG_WORD_COUNT, ceil(target_word_count * MIN_TARGET_WORD_RATIO))
 
 
 JobStatus = Literal[

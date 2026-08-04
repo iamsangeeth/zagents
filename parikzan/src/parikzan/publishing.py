@@ -11,7 +11,7 @@ from uuid import UUID, NAMESPACE_URL, uuid5
 
 from .clients import OllamaClient, QdrantClient
 from .config import AppSettings, QdrantSettings, settings
-from .contracts import BlogDraft
+from .contracts import BlogDraft, MIN_BLOG_WORD_COUNT, count_blog_words
 
 
 ApprovedStatus = Literal["approved", "published"]
@@ -46,6 +46,12 @@ class MarkdownPublisher:
         if approval_status not in {"approved", "published"}:
             raise PermissionError(
                 "blog draft must have approved status before publishing"
+            )
+        actual_word_count = count_blog_words(draft.body_markdown)
+        if actual_word_count < MIN_BLOG_WORD_COUNT:
+            raise ValueError(
+                f"blog draft must contain at least {MIN_BLOG_WORD_COUNT} words; "
+                f"got {actual_word_count}"
             )
 
         output_dir = self.config.output_dir.expanduser().resolve()
@@ -100,6 +106,12 @@ class QdrantContentIndexer:
         if approval_status not in {"approved", "published"}:
             raise PermissionError(
                 "blog draft must have approved status before indexing"
+            )
+        actual_word_count = count_blog_words(draft.body_markdown)
+        if actual_word_count < MIN_BLOG_WORD_COUNT:
+            raise ValueError(
+                f"blog draft must contain at least {MIN_BLOG_WORD_COUNT} words; "
+                f"got {actual_word_count}"
             )
 
         vector = self.ollama.embed([draft.body_markdown])[0]

@@ -13,6 +13,8 @@ from parikzan.contracts import (
     Citation,
     SEOData,
     ValidationIssue,
+    count_blog_words,
+    minimum_blog_word_count,
 )
 
 
@@ -59,7 +61,7 @@ class BloggingContractTests(unittest.TestCase):
             title="Python Quiz Preparation Guide",
             slug="python-quiz-preparation-guide",
             excerpt="A practical guide for preparing with Python quizzes and improving recall.",
-            body_markdown="# Python Quiz Preparation\n\n" + ("Practice with short explanations. " * 10),
+            body_markdown="# Python Quiz Preparation\n\n" + ("Practice with short explanations. " * 80),
             seo=SEOData(
                 meta_title="Python Quiz Preparation Guide",
                 meta_description="A practical guide for preparing with Python quizzes and improving recall.",
@@ -72,11 +74,16 @@ class BloggingContractTests(unittest.TestCase):
                     claim="Practice improves recall.",
                 )
             ],
-            word_count=55,
+            word_count=323,
         )
         payload = draft.model_dump(mode="json")
         self.assertEqual(payload["slug"], "python-quiz-preparation-guide")
         self.assertEqual(payload["citations"][0]["source_id"], str(source_id))
+
+    def test_minimum_word_count_scales_with_target(self) -> None:
+        self.assertEqual(minimum_blog_word_count(300), 300)
+        self.assertEqual(minimum_blog_word_count(800), 600)
+        self.assertEqual(count_blog_words("# Heading\n\nOne, two-three!"), 3)
 
 
 if __name__ == "__main__":

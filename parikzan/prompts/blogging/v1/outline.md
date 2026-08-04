@@ -8,7 +8,9 @@ Create article outline from supplied job input and approved context.
 
 ## Required behavior
 
-- Match topic and audience.
+- Match topic and audience. Topic must solve a general reader problem, not explain Parikzen.
+- Plan a complete, actionable solution that stands alone without Parikzen.
+- Keep at least 90% of planned sections general. Do not plan product tutorials, credit advice, feature explainers, or product-led comparisons.
 - Use primary and secondary keywords naturally in planned sections.
 - Build one clear reader intent and article angle.
 - Include 3–8 useful sections unless topic requires different structure.

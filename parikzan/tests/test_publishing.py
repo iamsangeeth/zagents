@@ -15,14 +15,14 @@ def make_draft() -> BlogDraft:
         title="Python Quiz Preparation Guide",
         slug="python-quiz-preparation-guide",
         excerpt="A practical guide for preparing with Python quizzes and improving recall.",
-        body_markdown="# Python Quiz Preparation\n\nPractice with short explanations. " * 10,
+        body_markdown="# Python Quiz Preparation\n\n" + ("Practice with short explanations. " * 80),
         seo=SEOData(
             meta_title="Python Quiz Preparation Guide",
             meta_description="A practical guide for preparing with Python quizzes and improving recall.",
             slug="python-quiz-preparation-guide",
             primary_keyword="python quiz",
         ),
-        word_count=55,
+        word_count=323,
     )
 
 
@@ -66,6 +66,30 @@ class PublishingTests(unittest.TestCase):
                     make_draft(),
                     job_id=uuid4(),
                     approval_status="pending",
+                )
+
+    def test_short_approved_draft_cannot_publish(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config = AppSettings(
+                environment="test",
+                debug=False,
+                host="127.0.0.1",
+                port=8000,
+                log_level="INFO",
+                output_dir=Path(directory),
+                data_dir=Path(directory),
+                knowledge_dir=Path(directory),
+                prompts_dir=Path(directory),
+                approval_required=True,
+            )
+            short_draft = make_draft().model_copy(
+                update={"body_markdown": "# Short\n\n" + ("word " * 40), "word_count": 40}
+            )
+            with self.assertRaises(ValueError):
+                MarkdownPublisher(config).publish(
+                    short_draft,
+                    job_id=uuid4(),
+                    approval_status="approved",
                 )
 
     def test_approved_draft_writes_markdown(self) -> None:
