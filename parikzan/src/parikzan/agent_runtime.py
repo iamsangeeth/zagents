@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from math import ceil
 from pathlib import Path
 from typing import Any
 from uuid import NAMESPACE_URL, UUID, uuid5
@@ -12,9 +13,11 @@ from .clients import OllamaClient, PostgresClient, QdrantClient
 from .config import settings
 from .contracts import (
     BlogDraft,
+    BlogDraftMetadata,
     BlogJobInput,
     BlogOutline,
     BlogRuntimeContext,
+    BlogSectionDraft,
     BlogValidationReport,
     SEOData,
     SourceReference,
@@ -121,7 +124,12 @@ class BlogAgentRuntime:
             return self.prompts.load(stage)
         return f"{self.prompts.load('system')}\n\n{self.prompts.load(stage)}"
 
-    def _user_context(self, context: BlogRuntimeContext, stage: str) -> str:
+    def _user_context(
+        self,
+        context: BlogRuntimeContext,
+        stage: str,
+        extra_context: str | None = None,
+    ) -> str:
         if stage == "validate":
             context_data = {
                 "job_id": str(context.job_id),
@@ -141,7 +149,11 @@ class BlogAgentRuntime:
                     for source in context.sources
                 ],
             }
-            return "VALIDATION INPUT JSON:\n" + json.dumps(context_data, indent=2)
+            return (
+                "VALIDATION INPUT JSON:\n"
+                + json.dumps(context_data, indent=2)
+                + (f"\n\n{extra_context}" if extra_context else "")
+            )
 
         context_data = context.model_dump(mode="json")
         context_data["sources"] = [
@@ -160,16 +172,26 @@ class BlogAgentRuntime:
             + json.dumps(context_data, indent=2)
             + "\n\nAPPROVED SOURCE CONTEXT (truncated):\n"
             + source_text
+            + (f"\n\n{extra_context}" if extra_context else "")
         )
 
-    def _run_agent(self, context: BlogRuntimeContext, stage: str, output_type: type[Any]) -> Any:
+    def _run_agent(
+        self,
+        context: BlogRuntimeContext,
+        stage: str,
+        output_type: type[Any],
+        extra_context: str | None = None,
+    ) -> Any:
         stage_max_tokens = {
             "outline": 800,
-            "draft": 1400,
+            "section": 1600,
+            "metadata": 800,
+            "draft": 4000,
             "seo": 400,
             "validate": 700,
-            "revise": 1400,
+            "revise": 4000,
         }
+        stage_retries = {"section": 3, "metadata": 3, "draft": 4, "revise": 4}
         max_tokens = stage_max_tokens.get(stage, 800)
         with self.metrics.observe_step(
             job_id=context.job_id,
@@ -185,9 +207,12 @@ class BlogAgentRuntime:
                 output_type,
                 name=f"blog-{stage}-v1",
                 system_prompt=self._prompt(stage),
+                retries=stage_retries.get(stage, 2),
                 max_tokens=max_tokens,
             )
-            return agent.run_sync(self._user_context(context, stage)).output
+            return agent.run_sync(
+                self._user_context(context, stage, extra_context)
+            ).output
 
     def _save(self, context: BlogRuntimeContext) -> BlogRuntimeContext:
         self.database.save_job_output(context.job_id, context.model_dump(mode="json"))
@@ -199,10 +224,98 @@ class BlogAgentRuntime:
         self.database.update_job_status(context.job_id, "outlining", current_step="outline")
         return self._save(updated)
 
-    def draft(self, context: BlogRuntimeContext) -> BlogRuntimeContext:
+    def _compose_draft(self, context: BlogRuntimeContext) -> BlogDraft:
         if context.outline is None:
-            raise ValueError("outline required before draft")
-        draft = self._run_agent(context, "draft", BlogDraft)
+            raise ValueError("outline required before drafting")
+
+        minimum_words = minimum_blog_word_count(context.input.target_word_count)
+        section_target = max(160, ceil(minimum_words / len(context.outline.sections)))
+        revision_context = ""
+        if context.validation is not None:
+            revision_context = "VALIDATION ISSUES TO FIX:\n" + json.dumps(
+                [issue.model_dump(mode="json") for issue in context.validation.issues],
+                indent=2,
+            )
+
+        metadata = self._run_agent(
+            context,
+            "metadata",
+            BlogDraftMetadata,
+            extra_context=revision_context or None,
+        )
+        generated_sections: list[BlogSectionDraft] = []
+
+        for index, outline_section in enumerate(context.outline.sections, start=1):
+            best: BlogSectionDraft | None = None
+            for attempt in range(1, 4):
+                section_context = {
+                    "section_number": index,
+                    "section_count": len(context.outline.sections),
+                    "section_target_words": section_target,
+                    "outline_section": outline_section.model_dump(mode="json"),
+                    "previous_section": best.body_markdown if best else None,
+                    "revision_feedback": revision_context or None,
+                }
+                candidate = self._run_agent(
+                    context,
+                    "section",
+                    BlogSectionDraft,
+                    extra_context="SECTION GENERATION INPUT:\n"
+                    + json.dumps(section_context, indent=2),
+                )
+                if best is None or count_blog_words(candidate.body_markdown) > count_blog_words(best.body_markdown):
+                    best = candidate
+                if count_blog_words(candidate.body_markdown) >= section_target:
+                    break
+            if best is not None:
+                generated_sections.append(best)
+
+        body_parts = [f"# {metadata.title}"]
+        body_parts.extend(
+            f"## {section.heading}\n\n{section.body_markdown.strip()}"
+            for section in generated_sections
+        )
+
+        expansion_attempt = 0
+        while count_blog_words("\n\n".join(body_parts)) < minimum_words and expansion_attempt < 3:
+            expansion_attempt += 1
+            current_body = "\n\n".join(body_parts)
+            remaining_words = minimum_words - count_blog_words(current_body)
+            expansion_context = {
+                "section_number": len(generated_sections) + 1,
+                "section_count": len(generated_sections) + 1,
+                "section_target_words": max(200, ceil(remaining_words * 1.25)),
+                "outline_section": {
+                    "heading": "Practical Application and Next Steps",
+                    "purpose": "Add substantive guidance needed to complete the article.",
+                    "key_points": ["practical examples", "common mistakes", "next steps"],
+                },
+                "current_body": current_body,
+                "remaining_words": remaining_words,
+            }
+            expansion = self._run_agent(
+                context,
+                "section",
+                BlogSectionDraft,
+                extra_context="ARTICLE EXPANSION INPUT:\n"
+                + json.dumps(expansion_context, indent=2),
+            )
+            body_parts.append(f"## {expansion.heading}\n\n{expansion.body_markdown.strip()}")
+
+        body_markdown = "\n\n".join(body_parts).strip()
+        return BlogDraft(
+            title=metadata.title,
+            slug=metadata.slug,
+            excerpt=metadata.excerpt,
+            body_markdown=body_markdown,
+            seo=metadata.seo,
+            citations=metadata.citations,
+            quiz_cta=metadata.quiz_cta,
+            word_count=count_blog_words(body_markdown),
+        )
+
+    def draft(self, context: BlogRuntimeContext) -> BlogRuntimeContext:
+        draft = self._compose_draft(context)
         updated = context.model_copy(update={"draft": draft, "status": "drafting"})
         self.database.update_job_status(context.job_id, "drafting", current_step="draft")
         return self._save(updated)
@@ -257,7 +370,7 @@ class BlogAgentRuntime:
     def revise(self, context: BlogRuntimeContext) -> BlogRuntimeContext:
         if context.draft is None or context.validation is None:
             raise ValueError("draft and validation required before revision")
-        draft = self._run_agent(context, "revise", BlogDraft)
+        draft = self._compose_draft(context)
         updated = context.model_copy(
             update={
                 "draft": draft,

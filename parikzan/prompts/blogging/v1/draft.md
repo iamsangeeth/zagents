@@ -10,7 +10,7 @@ Write complete article from job input, approved context, and approved outline.
 
 - Follow outline order unless source facts require correction.
 - Use clear Markdown headings and short paragraphs.
-- Meet target word-count range without padding. Draft must contain at least `max(300, ceil(target_word_count * 0.75))` words; count words from article body, not metadata.
+- Meet target word-count range without padding. Draft must contain at least `max(1000, ceil(target_word_count * 0.75))` words; count words from article body, not metadata.
 - Teach the reader's general problem first with practical steps, examples, and a complete solution they can use without Parikzen.
 - Keep at least 90% of article body general and actionable.
 - Do not make Parikzen the title, H1, introduction, primary keyword, main solution, or a required step.

@@ -23,7 +23,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const topics = [\n  { category: 'learning', topic: 'How active recall makes study sessions more effective', audience: 'students and self-directed learners', primary_keyword: 'active recall study', tone: 'educational' },\n  { category: 'learning', topic: 'How spaced repetition improves long-term memory', audience: 'students and self-directed learners', primary_keyword: 'spaced repetition learning', tone: 'educational' },\n  { category: 'learning', topic: 'How to build a daily study routine that lasts', audience: 'students and self-directed learners', primary_keyword: 'daily study routine', tone: 'practical' },\n  { category: 'learning', topic: 'How to prepare for prelims without cramming', audience: 'students and competitive exam aspirants', primary_keyword: 'how to prepare for prelims', tone: 'exam-focused' },\n  { category: 'self_study', topic: 'How to create a self-study plan for any subject', audience: 'self-directed learners', primary_keyword: 'self study plan', tone: 'practical' },\n  { category: 'self_study', topic: 'How to turn reading notes into useful practice questions', audience: 'self-directed learners', primary_keyword: 'turn notes into practice questions', tone: 'instructional' },\n  { category: 'self_study', topic: 'How to avoid passive rereading during self-study', audience: 'self-directed learners', primary_keyword: 'active self study techniques', tone: 'educational' },\n  { category: 'self_study', topic: 'How to study difficult topics without losing momentum', audience: 'self-directed learners', primary_keyword: 'study difficult topics', tone: 'supportive' },\n  { category: 'competitive_exam', topic: 'How to make a realistic competitive exam preparation plan', audience: 'competitive examination aspirants', primary_keyword: 'competitive exam preparation plan', tone: 'exam-focused' },\n  { category: 'competitive_exam', topic: 'How to analyze mock-test mistakes before the next exam', audience: 'competitive examination aspirants', primary_keyword: 'analyze mock test mistakes', tone: 'practical' },\n  { category: 'competitive_exam', topic: 'How to manage revision time before a competitive exam', audience: 'competitive examination aspirants', primary_keyword: 'competitive exam revision plan', tone: 'exam-focused' },\n  { category: 'competitive_exam', topic: 'How to choose what to study when the syllabus feels overwhelming', audience: 'competitive examination aspirants', primary_keyword: 'prioritize competitive exam syllabus', tone: 'supportive' },\n  { category: 'self_evaluation', topic: 'How to evaluate your own learning before an exam', audience: 'students and lifelong learners', primary_keyword: 'self evaluation for students', tone: 'educational' },\n  { category: 'self_evaluation', topic: 'How to turn incorrect answers into a study plan', audience: 'students and lifelong learners', primary_keyword: 'learn from incorrect answers', tone: 'practical' },\n  { category: 'self_evaluation', topic: 'How to measure learning progress with regular self-assessment', audience: 'students and lifelong learners', primary_keyword: 'learning self assessment', tone: 'educational' },\n  { category: 'self_evaluation', topic: 'How confidence checks improve exam preparation', audience: 'students and lifelong learners', primary_keyword: 'confidence based self assessment', tone: 'educational' },\n  { category: 'teachers', topic: 'How teachers can create balanced question papers', audience: 'teachers and educators', primary_keyword: 'create balanced question paper', tone: 'teacher-focused' },\n  { category: 'teachers', topic: 'How to blueprint a question paper from learning objectives', audience: 'teachers and educators', primary_keyword: 'question paper blueprint', tone: 'teacher-focused' },\n  { category: 'teachers', topic: 'How to mix easy medium and hard questions in an assessment', audience: 'teachers and educators', primary_keyword: 'question paper difficulty levels', tone: 'teacher-focused' },\n  { category: 'teachers', topic: 'How teachers can turn lesson objectives into practice questions', audience: 'teachers and educators', primary_keyword: 'lesson objectives practice questions', tone: 'teacher-focused' }\n];\nconst selected = topics[Math.floor(Math.random() * topics.length)];\nreturn [{ json: {\n  ...selected,\n  cta: 'If you want more practice, give your topic or notes/file to AI to generate a quiz at https://www.parikzen.com.',\n  locale: 'en',\n  target_word_count: 800,\n  output_format: 'markdown'\n} }];"
+        "jsCode": "const topics = [\n  { category: 'learning', topic: 'How active recall makes study sessions more effective', audience: 'students and self-directed learners', primary_keyword: 'active recall study', tone: 'educational' },\n  { category: 'learning', topic: 'How spaced repetition improves long-term memory', audience: 'students and self-directed learners', primary_keyword: 'spaced repetition learning', tone: 'educational' },\n  { category: 'learning', topic: 'How to build a daily study routine that lasts', audience: 'students and self-directed learners', primary_keyword: 'daily study routine', tone: 'practical' },\n  { category: 'learning', topic: 'How to prepare for prelims without cramming', audience: 'students and competitive exam aspirants', primary_keyword: 'how to prepare for prelims', tone: 'exam-focused' },\n  { category: 'self_study', topic: 'How to create a self-study plan for any subject', audience: 'self-directed learners', primary_keyword: 'self study plan', tone: 'practical' },\n  { category: 'self_study', topic: 'How to turn reading notes into useful practice questions', audience: 'self-directed learners', primary_keyword: 'turn notes into practice questions', tone: 'instructional' },\n  { category: 'self_study', topic: 'How to avoid passive rereading during self-study', audience: 'self-directed learners', primary_keyword: 'active self study techniques', tone: 'educational' },\n  { category: 'self_study', topic: 'How to study difficult topics without losing momentum', audience: 'self-directed learners', primary_keyword: 'study difficult topics', tone: 'supportive' },\n  { category: 'competitive_exam', topic: 'How to make a realistic competitive exam preparation plan', audience: 'competitive examination aspirants', primary_keyword: 'competitive exam preparation plan', tone: 'exam-focused' },\n  { category: 'competitive_exam', topic: 'How to analyze mock-test mistakes before the next exam', audience: 'competitive examination aspirants', primary_keyword: 'analyze mock test mistakes', tone: 'practical' },\n  { category: 'competitive_exam', topic: 'How to manage revision time before a competitive exam', audience: 'competitive examination aspirants', primary_keyword: 'competitive exam revision plan', tone: 'exam-focused' },\n  { category: 'competitive_exam', topic: 'How to choose what to study when the syllabus feels overwhelming', audience: 'competitive examination aspirants', primary_keyword: 'prioritize competitive exam syllabus', tone: 'supportive' },\n  { category: 'self_evaluation', topic: 'How to evaluate your own learning before an exam', audience: 'students and lifelong learners', primary_keyword: 'self evaluation for students', tone: 'educational' },\n  { category: 'self_evaluation', topic: 'How to turn incorrect answers into a study plan', audience: 'students and lifelong learners', primary_keyword: 'learn from incorrect answers', tone: 'practical' },\n  { category: 'self_evaluation', topic: 'How to measure learning progress with regular self-assessment', audience: 'students and lifelong learners', primary_keyword: 'learning self assessment', tone: 'educational' },\n  { category: 'self_evaluation', topic: 'How confidence checks improve exam preparation', audience: 'students and lifelong learners', primary_keyword: 'confidence based self assessment', tone: 'educational' },\n  { category: 'teachers', topic: 'How teachers can create balanced question papers', audience: 'teachers and educators', primary_keyword: 'create balanced question paper', tone: 'teacher-focused' },\n  { category: 'teachers', topic: 'How to blueprint a question paper from learning objectives', audience: 'teachers and educators', primary_keyword: 'question paper blueprint', tone: 'teacher-focused' },\n  { category: 'teachers', topic: 'How to mix easy medium and hard questions in an assessment', audience: 'teachers and educators', primary_keyword: 'question paper difficulty levels', tone: 'teacher-focused' },\n  { category: 'teachers', topic: 'How teachers can turn lesson objectives into practice questions', audience: 'teachers and educators', primary_keyword: 'lesson objectives practice questions', tone: 'teacher-focused' }\n];\nconst selected = topics[Math.floor(Math.random() * topics.length)];\nreturn [{ json: {\n  ...selected,\n  cta: 'If you want more practice, give your topic or notes/file to AI to generate a quiz at https://www.parikzen.com.',\n  locale: 'en',\n  target_word_count: 1200,\n  output_format: 'markdown'\n} }];"
       },
       "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b118",
       "name": "Select Random Blog Topic",
@@ -99,11 +99,14 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
         "options": {
-          "timeout": 180000
+          "timeout": 600000
         }
       },
       "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b104",
       "name": "Generate Draft",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
@@ -250,7 +253,7 @@
           "conditions": [
             {
               "leftValue": "={{ $json.revision_attempt }}",
-              "rightValue": 2,
+              "rightValue": 4,
               "operator": {
                 "type": "number",
                 "operation": "lte"
@@ -283,11 +286,14 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
         "options": {
-          "timeout": 180000
+          "timeout": 600000
         }
       },
       "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b110",
       "name": "Revise Draft",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
@@ -297,7 +303,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const result = $json;\nreturn [{ json: {\n  job_id: result.job_id,\n  status: 'awaiting_approval',\n  approval_id: result.approval_id ?? null,\n  approval_status: result.approval_status ?? 'pending',\n  revision_attempt: result.revision_attempt ?? 0,\n  outline: result.outline ?? null,\n  draft: result.draft ?? null,\n  validation: result.validation ?? null,\n  sources: result.sources ?? [],\n  next: 'human_approval'\n} }];"
+        "jsCode": "const result = $json;\nconst rawApprovalStatus = String(result.approval_status ?? '').trim().toLowerCase();\nconst approvalStatus = ['pending', 'approved', 'rejected'].includes(rawApprovalStatus)\n  ? rawApprovalStatus\n  : 'pending';\nreturn [{ json: {\n  job_id: result.job_id,\n  status: 'awaiting_approval',\n  approval_id: result.approval_id ?? null,\n  approval_status: approvalStatus,\n  revision_attempt: result.revision_attempt ?? 0,\n  outline: result.outline ?? null,\n  draft: result.draft ?? null,\n  validation: result.validation ?? null,\n  sources: result.sources ?? [],\n  next: 'human_approval'\n} }];"
       },
       "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b111",
       "name": "Prepare Workflow Result",
@@ -310,7 +316,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const result = $json;\nreturn [{ json: {\n  ...result,\n  status: 'awaiting_approval',\n  manual_approval: true,\n  revision_attempt: result.revision_attempt ?? 0,\n  error_code: 'manual_review_required',\n  error_message: 'Automatic validation remained unsuccessful after two revisions. Human decision required.'\n} }];"
+        "jsCode": "const result = $json;\nconst minimumPassed = result.validation?.checks?.minimum_word_count === true;\nreturn [{ json: {\n  ...result,\n  status: minimumPassed ? 'awaiting_approval' : 'failed',\n  manual_approval: minimumPassed,\n  revision_attempt: result.revision_attempt ?? 0,\n  error_code: minimumPassed ? 'manual_review_required' : 'minimum_word_count',\n  error_message: minimumPassed\n    ? 'Automatic validation remained unsuccessful after four revisions. Human decision required.'\n    : 'Draft remained below 1000 words after four revisions. Regeneration required.'\n} }];"
       },
       "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b112",
       "name": "Prepare Manual Review",
@@ -338,7 +344,7 @@
     },
     {
       "parameters": {
-        "content": "# Parikzan Blogging Agent v1\n\nSet n8n environment variable `PARIKZAN_AGENT_URL` to PydanticAI service URL.\n\nValidation failures receive two revision attempts. Valid drafts create pending human approval. Exhausted jobs return `failed`; publishing remains later task.",
+        "content": "# Parikzan Blogging Agent v1\n\nSet n8n environment variable `PARIKZAN_AGENT_URL` to PydanticAI service URL.\n\nValidation failures receive four revision attempts. Human approval only receives drafts meeting minimum length. Short exhausted jobs return failed and require regeneration; publishing remains later task.",
         "height": 220,
         "width": 340
       },
@@ -349,6 +355,39 @@
       "position": [
         500,
         40
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.validation?.checks?.minimum_word_count }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
+        },
+        "options": {}
+      },
+      "id": "7b2a1a7b-9d3f-4f3f-9d11-0f71b8d4b121",
+      "name": "Manual Review Length Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2860,
+        560
       ]
     }
   ],
@@ -547,7 +586,25 @@
       "main": [
         [
           {
+            "node": "Manual Review Length Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Review Length Gate": {
+      "main": [
+        [
+          {
             "node": "Request Human Approval",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Blog Result",
             "type": "main",
             "index": 0
           }

@@ -15,14 +15,14 @@ def make_draft() -> BlogDraft:
         title="Python Quiz Preparation Guide",
         slug="python-quiz-preparation-guide",
         excerpt="A practical guide for preparing with Python quizzes and improving recall.",
-        body_markdown="# Python Quiz Preparation\n\n" + ("Practice with short explanations. " * 80),
+        body_markdown="# Python Quiz Preparation\n\n" + ("Practice with short explanations. " * 260),
         seo=SEOData(
             meta_title="Python Quiz Preparation Guide",
             meta_description="A practical guide for preparing with Python quizzes and improving recall.",
             slug="python-quiz-preparation-guide",
             primary_keyword="python quiz",
         ),
-        word_count=323,
+        word_count=1043,
     )
 
 

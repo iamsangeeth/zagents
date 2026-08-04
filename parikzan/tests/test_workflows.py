@@ -15,7 +15,7 @@ class WorkflowTests(unittest.TestCase):
     def test_main_workflow_has_bounded_revision_and_approval(self) -> None:
         workflow = self.load_workflow("blogging_agent_v1.json")
         nodes = {node["name"]: node for node in workflow["nodes"]}
-        self.assertEqual(len(nodes), 19)
+        self.assertEqual(len(nodes), 20)
         self.assertIn("Normalize Validation Result", nodes)
         self.assertEqual(
             workflow["connections"]["Validate Blog"]["main"][0][0]["node"],
@@ -34,19 +34,24 @@ class WorkflowTests(unittest.TestCase):
             "Approval Payload Guard",
         )
         self.assertIn("manual approval was not requested", nodes["Approval Payload Guard"]["parameters"]["jsCode"])
-        self.assertIn("Prepare Manual Review", nodes)
-        self.assertEqual(
-            workflow["connections"]["Revision Limit"]["main"][1][0]["node"],
-            "Prepare Manual Review",
-        )
-        self.assertIn("manual_approval: true", nodes["Prepare Manual Review"]["parameters"]["jsCode"])
+        self.assertIn("Manual Review Length Gate", nodes)
+        self.assertIn("minimumPassed", nodes["Prepare Manual Review"]["parameters"]["jsCode"])
         self.assertEqual(
             workflow["connections"]["Prepare Manual Review"]["main"][0][0]["node"],
+            "Manual Review Length Gate",
+        )
+        self.assertEqual(
+            workflow["connections"]["Manual Review Length Gate"]["main"][0][0]["node"],
             "Request Human Approval",
         )
         self.assertEqual(
-            workflow["connections"]["Approval Payload Guard"]["main"][0][0]["node"],
-            "Request Human Approval",
+            workflow["connections"]["Manual Review Length Gate"]["main"][1][0]["node"],
+            "Return Blog Result",
+        )
+        self.assertIn("approvalStatus", nodes["Prepare Workflow Result"]["parameters"]["jsCode"])
+        self.assertEqual(
+            workflow["connections"]["Request Human Approval"]["main"][0][0]["node"],
+            "Prepare Workflow Result",
         )
         self.assertIn("Select Random Blog Topic", nodes)
         topic_code = nodes["Select Random Blog Topic"]["parameters"]["jsCode"]
@@ -57,6 +62,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertNotIn("How to use Parikzen", topic_code)
         self.assertIn("give your topic or notes/file to AI", topic_code)
         self.assertNotIn("Try generating a quiz at", topic_code)
+        self.assertIn("target_word_count: 1200", topic_code)
         self.assertIn("Math.random()", topic_code)
         self.assertIn("https://www.parikzen.com", topic_code)
         self.assertEqual(
@@ -72,13 +78,22 @@ class WorkflowTests(unittest.TestCase):
             nodes["Schedule Daily Blog"]["parameters"]["rule"]["interval"][0]["expression"],
             "0 8 * * *",
         )
+        for draft_node in ("Generate Draft", "Revise Draft"):
+            self.assertTrue(nodes[draft_node]["retryOnFail"])
+            self.assertEqual(nodes[draft_node]["maxTries"], 3)
+            self.assertEqual(nodes[draft_node]["waitBetweenTries"], 5000)
+            self.assertEqual(nodes[draft_node]["parameters"]["options"]["timeout"], 600000)
         self.assertEqual(
             workflow["connections"]["Revise Draft"]["main"][0][0]["node"],
             "Validate Blog",
         )
         self.assertEqual(
+            workflow["connections"]["Revision Limit"]["main"][1][0]["node"],
+            "Prepare Manual Review",
+        )
+        self.assertEqual(
             nodes["Revision Limit"]["parameters"]["conditions"]["conditions"][0]["rightValue"],
-            2,
+            4,
         )
         self.assertIn("/v1/blog/approval/request", nodes["Request Human Approval"]["parameters"]["url"])
         self.assertEqual(
@@ -107,7 +122,7 @@ class WorkflowTests(unittest.TestCase):
 
     def test_prompt_versions_and_required_knowledge_files_exist(self) -> None:
         prompt_dir = ROOT / "prompts" / "blogging" / "v1"
-        expected = {"system.md", "outline.md", "draft.md", "seo.md", "validate.md", "revise.md"}
+        expected = {"system.md", "outline.md", "draft.md", "section.md", "metadata.md", "seo.md", "validate.md", "revise.md"}
         self.assertEqual({path.name for path in prompt_dir.glob("*.md")}, expected)
         for path in prompt_dir.glob("*.md"):
             text = path.read_text(encoding="utf-8")

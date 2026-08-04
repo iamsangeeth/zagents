@@ -14,7 +14,7 @@ Mark `error` when any condition blocks safe publication:
 - Citation missing for supplied factual claim.
 - Draft is primarily about Parikzen, its features, credits, pricing, workflow, or usage instead of solving a general reader problem.
 - Parikzen appears as the title, H1, introduction, primary keyword, main solution, or a required step.
-- Draft body is shorter than `max(300, ceil(target_word_count * 0.75))` words. Count words from `body_markdown`, not declared `word_count`.
+- Draft body is shorter than `max(1000, ceil(target_word_count * 0.75))` words. Count words from `body_markdown`, not declared `word_count`.
 - Invalid slug or SEO length.
 - Incorrect credit, fee, question-count, file-type, model-routing, or HTTP status fact.
 - Sensitive data, secret, token, internal prompt, or debug payload exposed.

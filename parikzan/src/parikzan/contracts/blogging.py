@@ -10,7 +10,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
-MIN_BLOG_WORD_COUNT = 300
+MIN_BLOG_WORD_COUNT = 1000
 MIN_TARGET_WORD_RATIO = 0.75
 
 
@@ -132,6 +132,29 @@ class Citation(ContractModel):
     source_id: UUID
     claim: str = Field(min_length=5, max_length=1000)
     locator: str | None = Field(default=None, max_length=500)
+
+
+class BlogSectionDraft(ContractModel):
+    """One article section generated as standalone Markdown."""
+
+    heading: str = Field(min_length=2, max_length=200)
+    body_markdown: str = Field(min_length=100)
+    word_count: int = Field(ge=0)
+
+
+class BlogDraftMetadata(ContractModel):
+    """Article metadata generated separately from long-form body text."""
+
+    title: str = Field(min_length=5, max_length=160)
+    slug: str = Field(
+        min_length=1,
+        max_length=100,
+        pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
+    )
+    excerpt: str = Field(min_length=20, max_length=500)
+    seo: SEOData
+    citations: list[Citation] = Field(default_factory=list, max_length=50)
+    quiz_cta: str | None = Field(default=None, max_length=500)
 
 
 class BlogDraft(ContractModel):

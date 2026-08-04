@@ -52,7 +52,7 @@ curl -X POST 'http://localhost:5678/webhook-test/parikzan/blog' \
     "audience": "students",
     "primary_keyword": "quiz practice",
     "tone": "educational",
-    "target_word_count": 800,
+    "target_word_count": 1200,
     "output_format": "markdown"
   }'
 ```
@@ -61,9 +61,11 @@ Workflow includes bounded validation revision loop:
 
 ```text
 passed=true  → awaiting_approval
-passed=false → revise → validate (maximum two revisions)
-exhausted    → manual approval with validation warnings
+passed=false → revise → validate (maximum four revisions)
+exhausted    → human approval only when minimum length passes; otherwise failed/regeneration required
 ```
+
+`Generate Draft` and `Revise Draft` retry transient HTTP failures up to 3 times with 5-second waits. These retries do not increase the two-revision quality limit.
 
 Approval and publishing remain separate tasks.
 
